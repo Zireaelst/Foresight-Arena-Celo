@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "celo-mcp": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--refresh", "celo-mcp"],
+      "env": {
+        "CELO_RPC_URL": "${CELO_RPC_URL:-https://forno.celo.org}",
+        "CELO_TESTNET_RPC_URL": "${CELO_TESTNET_RPC_URL:-https://forno.celo-sepolia.celo-testnet.org}"
+      }
+    }
+  }
+}
