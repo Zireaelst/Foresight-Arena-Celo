@@ -1,0 +1,22 @@
+# --- dependencies & build output ---
+node_modules/
+dist/
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# --- secrets & local config ---
+# Agent keys live here. Never commit .env; .env.example is the template.
+.env
+.env.local
+.env.*.local
+.claude/
+
+# Installed agent skills are re-fetched with `npx skills add https://celobuilders.xyz`.
+# skills-lock.json is committed so the pinned version is reproducible.
+.agents/
+
+# --- OS ---
+.DS_Store
