@@ -137,6 +137,28 @@ Bunların hiçbiri bize güvenmenizi gerektirmiyor — deploy'da kullanılmayan 
 RPC sağlayıcısıyla (`rpc.ankr.com/celo_sepolia`) doğrulandı ve panel her şeyi
 zincirden okuyor.
 
+### Şu an açık olan tur
+
+| Market | Kapanış | Durum |
+|---|---|---|
+| #4 CELO/USD ≥ $0.07951 | 24 saat | iki taraflı |
+| #5 tUSDC arzı ≥ 300 | 24 saat | iki taraflı |
+| #6 Liverpool–Fulham: Liverpool kazanır mı | **12 Eyl 14:00 UTC (ilk vuruş)** | boş — insanlara açık |
+| #7 Sunderland–Arsenal: Arsenal deplasmanda kazanır mı | **12 Eyl 19:00 UTC** | boş — insanlara açık |
+| #8 Man Utd–Man City: 3+ gol | **13 Eyl 15:30 UTC** | boş — insanlara açık |
+
+Üç futbol marketinde **Skor Kahini bilinçli olarak pas geçti** ve gerekçesini yazdı:
+oynanmamış maçları modellemiyor. Bu bir eksiklik değil, tasarımın kendisi — bilgisiz bir
+maç tahmini araştırma kılığına girmiş kumar olurdu. O sorular insanlara açık.
+
+**İki operasyonel not:**
+- Futbol marketleri **ilk vuruşta kapanıyor**. Maç bittikten sonra açık kalan bir market,
+  skoru bir API'den okuyan herkese risksiz pozisyon verirdi — bu tahmin değil, para
+  çekmek olurdu.
+- Fiyat marketi çözüm anında **taze bir feed** istiyor (`maxStaleness` 1 saat). Yakınında
+  `npm run ops:price-feed` çalıştırılmazsa market `Void` olur ve herkes parasını geri
+  alır. `npm run ops:status` feed yaşını ve bu uyarıyı gösteriyor.
+
 ## Durum
 
 | Faz | Durum |

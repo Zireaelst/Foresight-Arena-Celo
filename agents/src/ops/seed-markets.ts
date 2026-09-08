@@ -78,12 +78,31 @@ async function main() {
     );
   }
 
-  // -- Skor Kahini: one fixture from the published registry -------------
+  // -- Skor Kahini: the fixtures from the published registry ------------
   const scoreResolver = process.env.ATTESTED_SCORE_RESOLVER_ADDRESS?.trim();
   if (scoreResolver) {
-    const registry = loadFixtureRegistry();
-    for (const entry of registry.values()) {
+    for (const entry of loadFixtureRegistry().values()) {
       const config = encodeAbiParameters(parseAbiParameters('(bytes32 eventKey)'), [{eventKey: entry.eventKey}]);
+
+      // A football market must stop taking positions at kickoff. Leaving it open past the
+      // whistle lets anyone read the score off a public API and stake against no risk --
+      // which would not be forecasting, and would come straight out of the other side's
+      // pocket. Settlement waits three hours, comfortably past full time plus stoppages.
+      if (entry.kickoffAt !== undefined) {
+        if (entry.kickoffAt <= now + 300) {
+          console.log(`skipping "${entry.ref.homeTeam} v ${entry.ref.awayTeam}": kickoff is past or imminent.`);
+          continue;
+        }
+        await create(entry.question, scoreResolver, config, entry.kickoffAt, entry.kickoffAt + 3 * 3600);
+        continue;
+      }
+
+      // No kickoff recorded: an already-played fixture, kept for the settled record. Only
+      // open one if explicitly asked, since its outcome is already public.
+      if (process.env.SEED_SETTLED_FIXTURES !== 'true') {
+        console.log(`skipping "${entry.ref.homeTeam} v ${entry.ref.awayTeam}": already played (no kickoff recorded).`);
+        continue;
+      }
       await create(entry.question, scoreResolver, config);
     }
   }
@@ -91,16 +110,22 @@ async function main() {
   console.log(`\nopened ${created.length} market(s):`);
   for (const line of created) console.log(`  ${line}`);
 
-  async function create(question: string, resolver: string, config: `0x${string}`) {
+  async function create(
+    question: string,
+    resolver: string,
+    config: `0x${string}`,
+    closes = closesAt,
+    resolves = resolvesAt,
+  ) {
     const receipt = await sendTaggedAndWait(ctx, {
       to: pool,
       data: encodeFunctionData({
         abi: foresightPoolAbi,
         functionName: 'createMarket',
-        args: [question, resolver as `0x${string}`, config, BigInt(closesAt), BigInt(resolvesAt)],
+        args: [question, resolver as `0x${string}`, config, BigInt(closes), BigInt(resolves)],
       }),
     });
-    created.push(`${receipt.transactionHash}  ${question.slice(0, 70)}…`);
+    created.push(`${receipt.transactionHash}  closes ${new Date(closes * 1000).toISOString().slice(0, 16)}Z  ${question.slice(0, 60)}…`);
   }
 }
 

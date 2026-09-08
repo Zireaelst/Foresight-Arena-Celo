@@ -1,6 +1,6 @@
 import {formatEther} from 'viem';
 
-import {erc20Abi, foresightPoolAbi} from '../core/abi.js';
+import {erc20Abi, foresightPoolAbi, sortedOraclesAbi} from '../core/abi.js';
 import {chainNow} from '../core/chain.js';
 import {Outcome} from '../core/types.js';
 import {AGENT_ROLES, addressFor, contextFor, type Role} from './wallets.js';
@@ -89,6 +89,8 @@ async function main() {
   console.log('');
 
   const now = await chainNow(ctx);
+  await reportPriceFeed(ctx, now);
+
   console.log(`markets   ${count}`);
   for (let i = 0n; i < count; i++) {
     const m = await ctx.publicClient.readContract({
@@ -113,3 +115,46 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+/**
+ * How fresh the price feed is, and what that means for open price markets.
+ *
+ * Worth a line of its own because it is the one way a market can quietly become
+ * unsettleable: the resolver refuses a median older than the market's staleness limit and
+ * returns Void, so a price market whose feed nobody refreshed refunds instead of settling.
+ * That is the safe failure, but an operator should see it coming rather than discover it.
+ */
+async function reportPriceFeed(ctx: ReturnType<typeof contextFor>, now: number): Promise<void> {
+  const feed = process.env.TESTNET_PRICE_FEED_ADDRESS?.trim() as `0x${string}` | undefined;
+  const rateFeedId = process.env.PRICE_RATE_FEED_ID?.trim() as `0x${string}` | undefined;
+  if (!feed || !rateFeedId) return;
+
+  try {
+    const [reportedAt, reporters] = await Promise.all([
+      ctx.publicClient.readContract({
+        address: feed,
+        abi: sortedOraclesAbi,
+        functionName: 'medianTimestamp',
+        args: [rateFeedId],
+      }),
+      ctx.publicClient.readContract({
+        address: feed,
+        abi: sortedOraclesAbi,
+        functionName: 'numRates',
+        args: [rateFeedId],
+      }),
+    ]);
+
+    const age = now - Number(reportedAt);
+    // Markets are seeded with a one-hour staleness limit; flag anything nearing it.
+    const stale = reporters === 0n || age > 3000;
+    console.log(`priceFeed ${feed}`);
+    console.log(
+      `  age     ${age}s (${reporters} reporter(s))` +
+        (stale ? '  <- STALE: open price markets will settle Void. Run `npm run ops:price-feed`.' : ''),
+    );
+    console.log('');
+  } catch {
+    console.log('priceFeed  could not be read\n');
+  }
+}

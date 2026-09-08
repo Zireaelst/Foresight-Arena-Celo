@@ -1,5 +1,5 @@
 {
-  "$comment": "Fixtures the Skor Kahini agent will trade and the score attestor will attest. The eventKey each market is keyed by is DERIVED from these fields (see agents/src/agents/score-oracle/consensus.ts, canonicalFixtureString) rather than assigned, so anyone can recompute it and check that a market points at the fixture it claims to.",
+  "$comment": "Fixtures the Skor Kahini agent will trade and the score attestor will attest. The eventKey each market is keyed by is DERIVED from these fields (see agents/src/agents/score-oracle/consensus.ts, canonicalFixtureString) rather than assigned, so anyone can recompute it and check that a market points at the fixture it claims to. kickoff is REQUIRED for unplayed fixtures: the seeder closes a score market at kickoff, because a market still open after the whistle can be staked risk-free by anyone who looks up the score.",
   "fixtures": [
     {
       "league": "eng.1",
@@ -7,7 +7,8 @@
       "homeTeam": "Arsenal",
       "awayTeam": "Chelsea",
       "condition": "home_win",
-      "question": "Arsenal vs Chelsea (Premier League, 2026-09-06): will Arsenal win? Settled by agreement between independent public score APIs; if they disagree the market voids and everyone is refunded."
+      "question": "Arsenal vs Chelsea (Premier League, 2026-09-06): will Arsenal win? Settled by agreement between independent public score APIs; if they disagree the market voids and everyone is refunded.",
+      "kickoff": null
     },
     {
       "league": "eng.1",
@@ -15,7 +16,35 @@
       "homeTeam": "Everton",
       "awayTeam": "Manchester United",
       "condition": "total_goals_at_least:3",
-      "question": "Everton vs Manchester United (Premier League, 2026-09-06): will the match finish with 3 or more total goals? Settled by agreement between independent public score APIs."
+      "question": "Everton vs Manchester United (Premier League, 2026-09-06): will the match finish with 3 or more total goals? Settled by agreement between independent public score APIs.",
+      "kickoff": null
+    },
+    {
+      "league": "eng.1",
+      "kickoffDate": "2026-09-12",
+      "kickoff": "2026-09-12T14:00:00Z",
+      "homeTeam": "Liverpool",
+      "awayTeam": "Fulham",
+      "condition": "home_win",
+      "question": "Liverpool vs Fulham (Premier League, 12 Sep 2026, 14:00 UTC): will Liverpool win? Trading closes at kickoff. Settled only when independent public score APIs agree on the exact final scoreline; if they disagree the market voids and everyone is refunded."
+    },
+    {
+      "league": "eng.1",
+      "kickoffDate": "2026-09-12",
+      "kickoff": "2026-09-12T19:00:00Z",
+      "homeTeam": "Sunderland",
+      "awayTeam": "Arsenal",
+      "condition": "away_win",
+      "question": "Sunderland vs Arsenal (Premier League, 12 Sep 2026, 19:00 UTC): will Arsenal win away? Trading closes at kickoff. Settled only when independent public score APIs agree on the exact final scoreline."
+    },
+    {
+      "league": "eng.1",
+      "kickoffDate": "2026-09-13",
+      "kickoff": "2026-09-13T15:30:00Z",
+      "homeTeam": "Manchester United",
+      "awayTeam": "Manchester City",
+      "condition": "total_goals_at_least:3",
+      "question": "Manchester United vs Manchester City (Premier League, 13 Sep 2026, 15:30 UTC): will the derby finish with 3 or more total goals? Trading closes at kickoff. Settled only when independent public score APIs agree on the exact final scoreline."
     }
   ]
 }

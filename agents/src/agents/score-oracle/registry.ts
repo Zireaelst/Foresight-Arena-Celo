@@ -11,11 +11,21 @@ export interface FixtureEntry {
   question: string;
   /** Derived, never assigned -- see {@link eventKeyFor}. */
   eventKey: `0x${string}`;
+  /**
+   * Kickoff as unix seconds, when known.
+   *
+   * The seeder closes a score market at kickoff. Without that, a market on a match that
+   * has already finished stays open for anyone to look up the result and stake against
+   * no risk at all -- which is not a forecast, it is a withdrawal.
+   */
+  kickoffAt?: number;
 }
 
 interface RawFixture {
   league: string;
   kickoffDate: string;
+  /** ISO 8601 instant. Null for fixtures already played when they were added. */
+  kickoff?: string | null;
   homeTeam: string;
   awayTeam: string;
   condition: string;
@@ -44,7 +54,14 @@ export function loadFixtureRegistry(path?: string): Map<string, FixtureEntry> {
     };
     const condition = parseCondition(raw.condition);
     const eventKey = eventKeyFor(ref, condition);
-    entries.set(eventKey.toLowerCase(), {ref, condition, question: raw.question, eventKey});
+    const kickoffAt = raw.kickoff ? Math.floor(new Date(raw.kickoff).getTime() / 1000) : undefined;
+    entries.set(eventKey.toLowerCase(), {
+      ref,
+      condition,
+      question: raw.question,
+      eventKey,
+      ...(kickoffAt !== undefined && Number.isFinite(kickoffAt) ? {kickoffAt} : {}),
+    });
   }
   return entries;
 }

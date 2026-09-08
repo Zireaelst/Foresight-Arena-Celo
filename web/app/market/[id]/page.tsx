@@ -26,7 +26,11 @@ export default async function MarketPage({params}: {params: Promise<{id: string}
   const agent = AGENT_FOR_KIND[market.kind];
   const total = market.yesPool + market.noPool;
   const implied = impliedYes(market.yesPool, market.noPool);
-  const oneSided = (market.yesPool === 0n || market.noPool === 0n) && market.outcome === Outcome.Unresolved;
+  // Distinguish "nobody yet" from "one side only": both settle to Void, but they ask
+  // different things of a reader -- one is an invitation, the other is a warning.
+  const unsettled = market.outcome === Outcome.Unresolved;
+  const empty = unsettled && market.yesPool === 0n && market.noPool === 0n;
+  const oneSided = unsettled && !empty && (market.yesPool === 0n || market.noPool === 0n);
 
   return (
     <div className="space-y-6">
@@ -60,6 +64,16 @@ export default async function MarketPage({params}: {params: Promise<{id: string}
               />
             </div>
           </section>
+
+          {empty && (
+            <p className="rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-xs leading-relaxed text-ink-dim">
+              Nobody has taken a position yet. If both sides are still empty at settlement the market voids and
+              nothing changes hands. {market.kind === 'score' && (
+                <>The agent has deliberately passed on this one: it does not forecast unplayed fixtures, only
+                reports finished ones its sources agree on. The question is open to anyone who wants to.</>
+              )}
+            </p>
+          )}
 
           {oneSided && (
             <p className="rounded-lg border border-accent/30 bg-accent/[0.05] px-3 py-2.5 text-xs leading-relaxed text-accent">
