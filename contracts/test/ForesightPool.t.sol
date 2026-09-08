@@ -54,7 +54,9 @@ contract ForesightPoolTest is Test {
 
     function _createMarket() internal returns (uint256) {
         vm.prank(owner);
-        return pool.createMarket("Will CELO be at or above $1 at settlement?", address(resolver), "", closesAt, resolvesAt);
+        return pool.createMarket(
+            "Will CELO be at or above $1 at settlement?", address(resolver), "", closesAt, resolvesAt
+        );
     }
 
     function _stake(address who, uint256 id, ForesightPool.Side side, uint256 amount) internal {
@@ -211,7 +213,9 @@ contract ForesightPoolTest is Test {
         uint256 extra = _createMarket();
         vm.prank(agentA);
         vm.expectRevert(
-            abi.encodeWithSelector(ForesightPool.ExposureCapExceeded.selector, uint256(10e6 + 1), uint256(10e6))
+            abi.encodeWithSelector(
+                ForesightPool.ExposureCapExceeded.selector, uint256(10e6 + 1), uint256(10e6)
+            )
         );
         pool.stake(extra, ForesightPool.Side.Yes, 1);
     }

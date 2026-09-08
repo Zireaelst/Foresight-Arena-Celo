@@ -96,5 +96,4 @@ contract MentoPriceResolver is IOutcomeResolver {
     function encodeConfig(Config memory c) external pure returns (bytes memory) {
         return abi.encode(c);
     }
-
 }

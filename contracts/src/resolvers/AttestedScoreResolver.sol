@@ -32,9 +32,7 @@ contract AttestedScoreResolver is IOutcomeResolver {
 
     mapping(bytes32 => Attestation) public attestations;
 
-    event OutcomeAttested(
-        bytes32 indexed eventKey, Outcome outcome, bytes32 payloadHash, string sourceURI
-    );
+    event OutcomeAttested(bytes32 indexed eventKey, Outcome outcome, bytes32 payloadHash, string sourceURI);
 
     error NotAttestor();
     error EmptyEventKey();
@@ -54,8 +52,12 @@ contract AttestedScoreResolver is IOutcomeResolver {
         if (outcome == Outcome.Unresolved) revert InvalidOutcome();
         if (attestations[eventKey].outcome != Outcome.Unresolved) revert AlreadyAttested();
 
-        attestations[eventKey] =
-            Attestation({outcome: outcome, publishedAt: uint64(block.timestamp), payloadHash: payloadHash, sourceURI: sourceURI});
+        attestations[eventKey] = Attestation({
+            outcome: outcome,
+            publishedAt: uint64(block.timestamp),
+            payloadHash: payloadHash,
+            sourceURI: sourceURI
+        });
         emit OutcomeAttested(eventKey, outcome, payloadHash, sourceURI);
     }
 

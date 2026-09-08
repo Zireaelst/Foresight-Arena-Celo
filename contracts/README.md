@@ -5,7 +5,7 @@ vendor'lanmış, git submodule yok — repo klonlandığı gibi derleniyor.
 
 ```bash
 forge build
-forge test                                        # 53 test, hepsi offline
+forge test                                        # 68 test, hepsi offline
 CELO_RPC_URL=https://forno.celo.org forge test --match-contract MentoFork -vv
 ```
 
@@ -19,6 +19,8 @@ CELO_RPC_URL=https://forno.celo.org forge test --match-contract MentoFork -vv
 | `src/resolvers/ChainMetricResolver.sol` | Zincir Nabzı — gas-kapalı `staticcall` |
 | `src/resolvers/AttestedScoreResolver.sol` | Skor Kahini — tek-yazımlık attestation |
 | `src/config/CeloAddresses.sol` | Ağ adresleri, hepsi zincirden doğrulanmış |
+| `src/testnet/TestnetUSDC.sol` | **Testnet vekili** — 6 decimal, açık faucet, EIP-3009 |
+| `src/testnet/TestnetSortedOracles.sol` | **Testnet vekili** — `ISortedOracles`, sahibi yazıyor |
 
 ## Ödeme matematiği
 
@@ -35,6 +37,28 @@ edilen neyse dağıtılabilecek olan o. Bölme aşağı yuvarlıyor; artan toz k
 
 **Tek taraflı kitap `Void` olur.** Kimse karşı tarafı almadıysa dağıtılacak karşı taraf
 riski de yoktur; tek başına gelen kişiye bedava "kazanç" vermek yerine herkes iade alır.
+
+## Testnet'teki iki vekil, ve neden var
+
+Celo Sepolia'da iki bağımlılık kırık, ikisi de demoyu imkânsız kılıyordu:
+
+- **USDC mint edilemiyor.** `0x01C5…C44E` gerçek bir Circle FiatToken; `mint` herkes için
+  `FiatToken: caller is not a minter` diyor. Kimsenin edinemediği bir stake token'ıyla
+  "bağımsız insanlar katılabilir" iddiası boş olurdu. Yerine `TestnetUSDC`: 6 decimal
+  (havuz başka bir şeyi reddediyor), alıcı başına saatte 50 tUSDC veren açık faucet, ve
+  x402'nin "exact" şemasının settle ettiği **EIP-3009**.
+- **Mento oracle 384 gün bayat.** `medianTimestamp(cUSD)` = 1755614497. Resolver bayat
+  medyanı doğru şekilde reddediyor, yani her fiyat marketi void olurdu. Yerine
+  `TestnetSortedOracles`: aynı arayüz, sahibi yazıyor, `reportedAt` = `block.timestamp`
+  (bayatlık kontrolü gerçek kalıyor).
+
+`Deploy.s.sol` bunu `block.chainid` ile zorluyor: ikisi de yalnızca Sepolia'da deploy
+ediliyor. Mainnet'te havuz **gerçek USDC**'de settle ediyor ve fiyat resolver'ı doğrudan
+**Mento'yu** okuyor.
+
+`TestnetSortedOracles`'ın güven modeli gerçeğinden **daha kötü** — tek bir sahip fiyatı
+yazıyor. Stake token'ının faucet oyuncağı olduğu bir ağda kabul edilebilir, başka hiçbir
+yerde değil.
 
 ## Adresleri yeniden doğrulama
 
@@ -56,5 +80,10 @@ forge script script/Deploy.s.sol --rpc-url celo_sepolia --broadcast --private-ke
 Mainnet aynı komut, `--rpc-url celo` ile. **Çalıştırmadan önce D-08 (güvenlik incelemesi)
 kapanmış olmalı.**
 
-Uçtan uca yerel deneme için `script/LocalDemo.s.sol` bir anvil düğümüne tam bir arena
-kuruyor (mock USDC dahil). Sadece yerel kullanım için.
+Deploy `deployments/<chainId>.json` yazıyor — agent katmanı ve panel adresleri oradan
+okuyor, güncellenmesi hatırlanması gereken bir README'den değil.
+
+Uçtan uca yerel deneme için `scripts/local-e2e.sh` (repo kökü) Celo Sepolia'yı forklayıp
+tam turu koşuyor: deploy, **gerçek** ERC-8004 registry'lerine kayıt, market açma,
+agent'ların pozisyon alması, settlement ve itibar yazımı. `script/LocalDemo.s.sol` daha
+küçük bir anvil senaryosu, sadece yerel kullanım için.

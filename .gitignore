@@ -7,9 +7,17 @@ contracts/out/
 contracts/cache/
 contracts/broadcast/
 
+# Deployment records are written by the deploy script. They are ignored while the only
+# ones produced are from a local anvil fork: anvil's addresses are deterministic and look
+# exactly like real ones, so committing them would advertise a deployment that does not
+# exist. Commit the file for a network the arena is genuinely live on -- the dashboard
+# reads its addresses from here.
+contracts/deployments/*.json
+
 # --- secrets & local config ---
 # Agent keys live here. Never commit .env; .env.example is the template.
 .env
+.env.backup
 .env.local
 .env.*.local
 .claude/

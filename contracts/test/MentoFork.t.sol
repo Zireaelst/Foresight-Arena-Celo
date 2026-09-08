@@ -41,10 +41,7 @@ contract MentoForkTest is Test {
     {
         return abi.encode(
             MentoPriceResolver.Config({
-                rateFeedId: CUSD,
-                thresholdFixed: thresholdFixed,
-                comparator: cmp,
-                maxStaleness: 6 hours
+                rateFeedId: CUSD, thresholdFixed: thresholdFixed, comparator: cmp, maxStaleness: 6 hours
             })
         );
     }

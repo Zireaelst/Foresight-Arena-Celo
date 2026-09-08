@@ -7,7 +7,7 @@ optimizer = true
 optimizer_runs = 200
 via_ir = false
 evm_version = "cancun"
-fs_permissions = [{ access = "read", path = "./deployments" }]
+fs_permissions = [{ access = "read-write", path = "./deployments" }]
 
 [fmt]
 line_length = 110
@@ -20,4 +20,8 @@ celo_sepolia = "${CELO_TESTNET_RPC_URL}"
 [lint]
 # Public immutables are read as getters by off-chain code; camelCase keeps the ABI
 # consistent with the rest of the surface.
-exclude_lints = ["screaming-snake-case-immutable"]
+#
+# asm-keccak256 suggests hand-rolling keccak in inline assembly. The EIP-712 hashing in
+# the testnet token is already the standard, widely-reviewed formulation; trading that
+# legibility for a few hundred gas on a faucet token is a bad exchange.
+exclude_lints = ["screaming-snake-case-immutable", "asm-keccak256"]

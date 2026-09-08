@@ -31,10 +31,7 @@ contract MentoPriceResolverTest is Test {
     {
         return abi.encode(
             MentoPriceResolver.Config({
-                rateFeedId: FEED,
-                thresholdFixed: thresholdFixed,
-                comparator: cmp,
-                maxStaleness: MAX_STALENESS
+                rateFeedId: FEED, thresholdFixed: thresholdFixed, comparator: cmp, maxStaleness: MAX_STALENESS
             })
         );
     }
@@ -151,11 +148,12 @@ contract ChainMetricResolverTest is Test {
         token.mint(address(this), 1_000e6);
     }
 
-    function _config(address target, bytes memory callData, uint256 threshold, ChainMetricResolver.Comparator cmp)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function _config(
+        address target,
+        bytes memory callData,
+        uint256 threshold,
+        ChainMetricResolver.Comparator cmp
+    ) internal pure returns (bytes memory) {
         return abi.encode(ChainMetricResolver.Config(target, callData, threshold, cmp));
     }
 
@@ -182,7 +180,10 @@ contract ChainMetricResolverTest is Test {
     function test_revertingTargetVoidsInsteadOfBubblingUp() public view {
         // Unknown selector on a real contract: the staticcall reverts.
         bytes memory config = _config(
-            address(token), abi.encodeWithSignature("noSuchFunction()"), 1, ChainMetricResolver.Comparator.AtOrAbove
+            address(token),
+            abi.encodeWithSignature("noSuchFunction()"),
+            1,
+            ChainMetricResolver.Comparator.AtOrAbove
         );
         assertEq(
             uint8(resolver.resolve(config)),
@@ -214,11 +215,19 @@ contract ChainMetricResolverTest is Test {
         bytes memory selector = abi.encodeWithSignature("totalSupply()");
         uint256 exact = token.totalSupply();
         assertEq(
-            uint8(resolver.resolve(_config(address(token), selector, exact, ChainMetricResolver.Comparator.AtOrAbove))),
+            uint8(
+                resolver.resolve(
+                    _config(address(token), selector, exact, ChainMetricResolver.Comparator.AtOrAbove)
+                )
+            ),
             uint8(Outcome.Yes)
         );
         assertEq(
-            uint8(resolver.resolve(_config(address(token), selector, exact, ChainMetricResolver.Comparator.AtOrBelow))),
+            uint8(
+                resolver.resolve(
+                    _config(address(token), selector, exact, ChainMetricResolver.Comparator.AtOrBelow)
+                )
+            ),
             uint8(Outcome.Yes)
         );
     }
@@ -229,7 +238,9 @@ contract ChainMetricResolverTest is Test {
             _config(makeAddr("eoa"), hex"12345678", 1, ChainMetricResolver.Comparator.AtOrAbove)
         );
         vm.expectRevert(ChainMetricResolver.EmptyCallData.selector);
-        resolver.validateConfig(_config(address(token), hex"1234", 1, ChainMetricResolver.Comparator.AtOrAbove));
+        resolver.validateConfig(
+            _config(address(token), hex"1234", 1, ChainMetricResolver.Comparator.AtOrAbove)
+        );
     }
 }
 
