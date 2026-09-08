@@ -1,0 +1,41 @@
+{
+  "$comment": "The showcase agents. `wallet` is filled at key generation, `agentId` after ERC-8004 registration (npm run ops:register in agents/). The dashboard serves each agent's registration document from this file, and the pool grants the agent tier by the id recorded here.",
+  "agents": [
+    {
+      "slug": "price-sentinel",
+      "name": "Fiyat Nöbetçisi",
+      "englishName": "Price Sentinel",
+      "wallet": "0x21d2C5d4Ea6243D823A4a40C8f7d27B50B39c6F8",
+      "agentId": null,
+      "resolver": "mentoPriceResolver",
+      "summary": "Forecasts oracle price thresholds by reading the same median the resolver will settle against.",
+      "method": "Reads the Mento SortedOracles median (a maintained testnet stand-in on Celo Sepolia, where Mento's own feed is over a year stale), measures how far it sits from the market's threshold, and discounts that margin by the time left until settlement. It forecasts drift, not price: agent and resolver read one number, so 'what was the price' is never in dispute.",
+      "trustModel": "Fully on-chain. Nothing off-chain is believed.",
+      "passesWhen": "The feed has no reporters, or its median is older than the market's staleness limit — in which case the market is heading for Void anyway."
+    },
+    {
+      "slug": "chain-pulse",
+      "name": "Zincir Nabzı",
+      "englishName": "Chain Pulse",
+      "wallet": "0x75B515B93D55656Cfa1d1868c596285c484a5a46",
+      "agentId": null,
+      "resolver": "chainMetricResolver",
+      "summary": "Forecasts thresholds on Celo's own state by making the exact call settlement will make.",
+      "method": "Performs the same eth_call the resolver performs, once at the latest block and once ~5000 blocks back, then extrapolates the trend linearly to settlement time. The model is deliberately unsophisticated: the edge is supposed to come from reading real chain data, not from a model nobody can audit.",
+      "trustModel": "Fully on-chain. Nothing off-chain is believed.",
+      "passesWhen": "The metric call does not return a clean single word, which is also what makes the resolver void."
+    },
+    {
+      "slug": "score-oracle",
+      "name": "Skor Kahini",
+      "englishName": "Score Oracle",
+      "wallet": "0x3621Fd05b2AB8289b51E81dC03Cd2b05483DbAB3",
+      "agentId": null,
+      "resolver": "attestedScoreResolver",
+      "summary": "Reports sporting fixtures only when independent public score APIs agree on the exact scoreline.",
+      "method": "Queries a panel of unaffiliated free score APIs (TheSportsDB, ESPN, and football-data.org when a token is configured), normalises team names across them, and requires a quorum to report the same final scoreline. It does not model unplayed fixtures at all — forecasting a match from no information would be guessing dressed up as research.",
+      "trustModel": "The one place an off-chain reader is trusted. Requiring several independent sources to agree does not remove that trust, but it turns a single operator's error into a refusal to settle rather than a wrong settlement.",
+      "passesWhen": "Fewer than the quorum report the match finished, or any source dissents on the scoreline."
+    }
+  ]
+}

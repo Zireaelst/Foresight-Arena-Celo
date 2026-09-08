@@ -1,90 +1,109 @@
 import {decodeAbiParameters, type Address, type Hex} from 'viem';
 
-import {Side, type ForesightAgent, type Intent, type MarketView, type Research} from '../../core/types.js';
-import {NullScoreFeed, type ScoreFeed} from './feed.js';
+import {Outcome, Side, type ForesightAgent, type Intent, type MarketView, type Research} from '../../core/types.js';
+import {ScoreConsensus, type Condition, type ConsensusResult} from './consensus.js';
+import type {FixtureRef} from './providers/types.js';
+
+/**
+ * Where the agent gets a scoreline from.
+ *
+ * Two implementations satisfy it: {@link ScoreConsensus}, which queries the public APIs
+ * directly, and {@link PurchasedScoreFeed}, which buys the same report over x402. The
+ * agent is written against the interface so that paying for data is a deployment choice
+ * rather than a different agent.
+ */
+export interface ScoreSource {
+  readonly quorum: number;
+  panelFor(league: string): {name: string}[] | string[];
+  resolve(ref: FixtureRef, condition: Condition): Promise<ConsensusResult>;
+}
+import {loadFixtureRegistry, type FixtureEntry} from './registry.js';
 
 /**
  * Skor Kahini -- the score oracle.
  *
  * The only one of the three agents whose data lives off-chain, which makes it the only
- * one whose settlement needs an attestor (see AttestedScoreResolver). The agent's honest
- * position is therefore narrower than the other two: it forecasts fixtures it can read
- * from a public API, cites the URL in every rationale, and passes outright when the feed
- * has nothing.
+ * one whose settlement needs an attestor (see AttestedScoreResolver). Its honest position
+ * is therefore narrower than the other two: it reports fixtures that a panel of
+ * independent public APIs agree on, cites every one of their URLs, and passes outright
+ * when they do not agree.
  *
- * A market's resolverConfig only carries an `eventKey` hash, so the mapping from key to
- * fixture is held here. That mapping is part of the public market description -- an agent
- * that could not tell you which fixture a key refers to has no business staking on it.
+ * It does not model unplayed fixtures. Forecasting a football match from no information
+ * would be guessing dressed up as research, and every rationale this project emits is
+ * supposed to be something a reader can re-check.
  */
 export class ScoreOracle implements ForesightAgent {
   readonly name = 'score-oracle';
-  readonly description = 'Forecasts public sporting fixtures and cites the source for every call.';
+  readonly description =
+    'Reports public sporting fixtures that independent score APIs agree on, and cites all of them.';
 
   agentId?: bigint;
 
+  private readonly registry: ReadonlyMap<string, FixtureEntry>;
+
   constructor(
     private readonly resolverAddress: Address,
-    private readonly feed: ScoreFeed = new NullScoreFeed(),
-    /** eventKey (bytes32, lowercase hex) -> the provider's fixture id and what YES means. */
-    private readonly eventKeys: ReadonlyMap<string, {fixtureId: string; yesMeans: 'home-win' | 'away-win' | 'draw'}> =
-      new Map(),
-  ) {}
+    private readonly consensus: ScoreSource = new ScoreConsensus(),
+    registry?: ReadonlyMap<string, FixtureEntry>,
+  ) {
+    this.registry = registry ?? loadFixtureRegistry();
+  }
 
   isInScope(market: MarketView): boolean {
     if (market.resolver.toLowerCase() !== this.resolverAddress.toLowerCase()) return false;
     const key = this.eventKeyOf(market);
-    return key !== null && this.eventKeys.has(key);
+    return key !== null && this.registry.has(key);
   }
 
   async research(market: MarketView): Promise<Research> {
     const key = this.eventKeyOf(market);
-    const mapping = key ? this.eventKeys.get(key) : undefined;
+    const entry = key ? this.registry.get(key) : undefined;
 
-    if (!mapping) {
+    if (!entry) {
       return {
         marketId: market.id,
         probabilityYes: 0.5,
         confidence: 0,
-        rationale: 'No fixture is mapped to this event key, so there is nothing to read.',
-        sources: [],
-      };
-    }
-
-    const fixture = await this.feed.getFixture(mapping.fixtureId);
-    if (!fixture) {
-      return {
-        marketId: market.id,
-        probabilityYes: 0.5,
-        confidence: 0,
-        rationale: `Feed "${this.feed.providerName}" returned nothing for fixture ${mapping.fixtureId}.`,
-        sources: [],
-      };
-    }
-
-    const sources = [fixture.sourceUrl, `provider=${this.feed.providerName} fixture=${fixture.id}`];
-
-    // A finished fixture is not a forecast, it is a fact. Say so, and stake accordingly.
-    if (fixture.status === 'finished' && fixture.homeScore !== undefined && fixture.awayScore !== undefined) {
-      const yes = outcomeMatches(mapping.yesMeans, fixture.homeScore, fixture.awayScore);
-      return {
-        marketId: market.id,
-        probabilityYes: yes ? 1 : 0,
-        confidence: 1,
         rationale:
-          `${fixture.homeTeam} ${fixture.homeScore}-${fixture.awayScore} ${fixture.awayTeam} (final). ` +
-          `YES means ${mapping.yesMeans}, so the answer is ${yes ? 'YES' : 'NO'}.`,
-        sources,
+          'This market\'s event key is not in the published fixture registry, so the agent cannot say ' +
+          'which fixture it refers to. Staking on a question it cannot describe would be indefensible.',
+        sources: [],
       };
     }
 
+    const {ref, condition} = entry;
+    const panel = this.consensus.panelFor(ref.league).map((p) => (typeof p === 'string' ? p : p.name));
+    const result = await this.consensus.resolve(ref, condition);
+
+    if (result.status === 'undecided') {
+      return {
+        marketId: market.id,
+        probabilityYes: 0.5,
+        confidence: 0,
+        rationale: `No consensus on ${ref.homeTeam} vs ${ref.awayTeam} (${ref.kickoffDate}): ${result.reason}`,
+        sources: [
+          `panel=${panel.join(',')} quorum=${this.consensus.quorum}`,
+          ...result.observations.map((o) => o.sourceUrl),
+        ],
+      };
+    }
+
+    // A finished, agreed fixture is not a forecast -- it is a fact that the market has
+    // not yet settled against. Full confidence is honest here, and only here.
+    const yes = result.outcome === Outcome.Yes;
     return {
       marketId: market.id,
-      probabilityYes: 0.5,
-      confidence: 0,
+      probabilityYes: yes ? 1 : 0,
+      confidence: 1,
       rationale:
-        `${fixture.homeTeam} vs ${fixture.awayTeam} is ${fixture.status}; ` +
-        'this agent does not model unplayed fixtures, it only reports played ones.',
-      sources,
+        `${ref.homeTeam} ${result.homeScore}-${result.awayScore} ${ref.awayTeam} (final), agreed by ` +
+        `${result.agreeing.map((o) => o.provider).join(' and ')}. YES means ${entry.condition.kind}, ` +
+        `so the answer is ${yes ? 'YES' : 'NO'}.`,
+      sources: [
+        `panel=${panel.join(',')} quorum=${this.consensus.quorum}`,
+        `payloadHash=${result.payloadHash}`,
+        ...result.agreeing.map((o) => o.sourceUrl),
+      ],
     };
   }
 
@@ -98,16 +117,13 @@ export class ScoreOracle implements ForesightAgent {
 
   private eventKeyOf(market: MarketView): string | null {
     try {
-      const [config] = decodeAbiParameters([{type: 'tuple', components: [{name: 'eventKey', type: 'bytes32'}]}], market.resolverConfig as Hex);
+      const [config] = decodeAbiParameters(
+        [{type: 'tuple', components: [{name: 'eventKey', type: 'bytes32'}]}],
+        market.resolverConfig as Hex,
+      );
       return config.eventKey.toLowerCase();
     } catch {
       return null;
     }
   }
-}
-
-function outcomeMatches(yesMeans: 'home-win' | 'away-win' | 'draw', home: number, away: number): boolean {
-  if (yesMeans === 'home-win') return home > away;
-  if (yesMeans === 'away-win') return away > home;
-  return home === away;
 }

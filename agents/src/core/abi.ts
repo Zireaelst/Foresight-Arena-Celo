@@ -109,6 +109,117 @@ export const foresightPoolAbi = [
     inputs: [{name: 'account', type: 'address'}],
     outputs: [{type: 'uint256'}],
   },
+  {
+    type: 'function',
+    name: 'agentIdOf',
+    stateMutability: 'view',
+    inputs: [{name: 'wallet', type: 'address'}],
+    outputs: [{type: 'uint256'}],
+  },
+  {
+    type: 'function',
+    name: 'isApprovedResolver',
+    stateMutability: 'view',
+    inputs: [{name: 'resolver', type: 'address'}],
+    outputs: [{type: 'bool'}],
+  },
+  {type: 'function', name: 'owner', stateMutability: 'view', inputs: [], outputs: [{type: 'address'}]},
+  {type: 'function', name: 'paused', stateMutability: 'view', inputs: [], outputs: [{type: 'bool'}]},
+  {
+    type: 'function',
+    name: 'MAX_OPEN_EXPOSURE_AGENT',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{type: 'uint256'}],
+  },
+  {
+    type: 'function',
+    name: 'MAX_OPEN_EXPOSURE_HUMAN',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{type: 'uint256'}],
+  },
+
+  // -- owner-only administration ---------------------------------------
+  {
+    type: 'function',
+    name: 'registerAgent',
+    stateMutability: 'nonpayable',
+    inputs: [
+      {name: 'wallet', type: 'address'},
+      {name: 'agentId', type: 'uint256'},
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'deregisterAgent',
+    stateMutability: 'nonpayable',
+    inputs: [{name: 'wallet', type: 'address'}],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'setResolverApproval',
+    stateMutability: 'nonpayable',
+    inputs: [
+      {name: 'resolver', type: 'address'},
+      {name: 'approved', type: 'bool'},
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'voidMarket',
+    stateMutability: 'nonpayable',
+    inputs: [{name: 'marketId', type: 'uint256'}],
+    outputs: [],
+  },
+  {type: 'function', name: 'pause', stateMutability: 'nonpayable', inputs: [], outputs: []},
+  {type: 'function', name: 'unpause', stateMutability: 'nonpayable', inputs: [], outputs: []},
+
+  // -- events the dashboard indexes ------------------------------------
+  {
+    type: 'event',
+    name: 'MarketCreated',
+    inputs: [
+      {name: 'marketId', type: 'uint256', indexed: true},
+      {name: 'creator', type: 'address', indexed: true},
+      {name: 'resolver', type: 'address', indexed: true},
+      {name: 'closesAt', type: 'uint64', indexed: false},
+      {name: 'resolvesAt', type: 'uint64', indexed: false},
+      {name: 'question', type: 'string', indexed: false},
+    ],
+  },
+  {
+    type: 'event',
+    name: 'Staked',
+    inputs: [
+      {name: 'marketId', type: 'uint256', indexed: true},
+      {name: 'account', type: 'address', indexed: true},
+      {name: 'side', type: 'uint8', indexed: false},
+      {name: 'amount', type: 'uint256', indexed: false},
+    ],
+  },
+  {
+    type: 'event',
+    name: 'MarketResolved',
+    inputs: [
+      {name: 'marketId', type: 'uint256', indexed: true},
+      {name: 'outcome', type: 'uint8', indexed: false},
+      {name: 'yesPool', type: 'uint256', indexed: false},
+      {name: 'noPool', type: 'uint256', indexed: false},
+    ],
+  },
+  {
+    type: 'event',
+    name: 'Claimed',
+    inputs: [
+      {name: 'marketId', type: 'uint256', indexed: true},
+      {name: 'account', type: 'address', indexed: true},
+      {name: 'payout', type: 'uint256', indexed: false},
+    ],
+  },
 ] as const;
 
 export const erc20Abi = [
@@ -139,6 +250,9 @@ export const erc20Abi = [
     inputs: [{name: 'account', type: 'address'}],
     outputs: [{type: 'uint256'}],
   },
+  {type: 'function', name: 'totalSupply', stateMutability: 'view', inputs: [], outputs: [{type: 'uint256'}]},
+  {type: 'function', name: 'decimals', stateMutability: 'view', inputs: [], outputs: [{type: 'uint8'}]},
+  {type: 'function', name: 'symbol', stateMutability: 'view', inputs: [], outputs: [{type: 'string'}]},
 ] as const;
 
 /** ERC-8004 Reputation Registry -- only the call this project makes. */
@@ -232,4 +346,56 @@ export const sortedOraclesAbi = [
     inputs: [{name: 'rateFeedId', type: 'address'}],
     outputs: [{type: 'uint256'}],
   },
+] as const;
+
+/** AttestedScoreResolver -- the write the score attestor makes, plus the public record. */
+export const attestedScoreResolverAbi = [
+  {
+    type: 'function',
+    name: 'attest',
+    stateMutability: 'nonpayable',
+    inputs: [
+      {name: 'eventKey', type: 'bytes32'},
+      {name: 'outcome', type: 'uint8'},
+      {name: 'payloadHash', type: 'bytes32'},
+      {name: 'sourceURI', type: 'string'},
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'attestations',
+    stateMutability: 'view',
+    inputs: [{name: 'eventKey', type: 'bytes32'}],
+    outputs: [
+      {name: 'outcome', type: 'uint8'},
+      {name: 'publishedAt', type: 'uint64'},
+      {name: 'payloadHash', type: 'bytes32'},
+      {name: 'sourceURI', type: 'string'},
+    ],
+  },
+  {type: 'function', name: 'attestor', stateMutability: 'view', inputs: [], outputs: [{type: 'address'}]},
+] as const;
+
+/** Shared by every resolver: the dashboard renders `describe` next to each market. */
+export const outcomeResolverAbi = [
+  {
+    type: 'function',
+    name: 'describe',
+    stateMutability: 'view',
+    inputs: [{name: 'config', type: 'bytes'}],
+    outputs: [{type: 'string'}],
+  },
+  {
+    type: 'function',
+    name: 'resolve',
+    stateMutability: 'view',
+    inputs: [{name: 'config', type: 'bytes'}],
+    outputs: [{type: 'uint8'}],
+  },
+] as const;
+
+/** MentoPriceResolver -- the agent asks the resolver which oracle it will settle against. */
+export const mentoPriceResolverAbi = [
+  {type: 'function', name: 'sortedOracles', stateMutability: 'view', inputs: [], outputs: [{type: 'address'}]},
 ] as const;

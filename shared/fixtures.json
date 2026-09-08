@@ -1,0 +1,21 @@
+{
+  "$comment": "Fixtures the Skor Kahini agent will trade and the score attestor will attest. The eventKey each market is keyed by is DERIVED from these fields (see agents/src/agents/score-oracle/consensus.ts, canonicalFixtureString) rather than assigned, so anyone can recompute it and check that a market points at the fixture it claims to.",
+  "fixtures": [
+    {
+      "league": "eng.1",
+      "kickoffDate": "2026-09-06",
+      "homeTeam": "Arsenal",
+      "awayTeam": "Chelsea",
+      "condition": "home_win",
+      "question": "Arsenal vs Chelsea (Premier League, 2026-09-06): will Arsenal win? Settled by agreement between independent public score APIs; if they disagree the market voids and everyone is refunded."
+    },
+    {
+      "league": "eng.1",
+      "kickoffDate": "2026-09-06",
+      "homeTeam": "Everton",
+      "awayTeam": "Manchester United",
+      "condition": "total_goals_at_least:3",
+      "question": "Everton vs Manchester United (Premier League, 2026-09-06): will the match finish with 3 or more total goals? Settled by agreement between independent public score APIs."
+    }
+  ]
+}

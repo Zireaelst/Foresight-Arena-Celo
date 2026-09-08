@@ -1,36 +1,34 @@
 /**
- * The sports data source is still an open decision (see docs/DECISIONS.md, D-06), so the
- * agent talks to this interface rather than to a provider. Swapping in the chosen API
- * means writing one adapter and changing one line in the CLI wiring.
+ * D-07 is closed: the sports data source is a *panel* of independent free APIs rather
+ * than a single provider.
+ *
+ * The reasoning is in docs/DECISIONS.md. In short: picking one API would have made its
+ * operator the silent authority behind every sports market, which is exactly the trusted
+ * third party the rest of the project works to avoid. Requiring several unaffiliated
+ * sources to report the same final scoreline turns a single operator's error from a
+ * wrong settlement into a refusal to settle -- and refusing is always safe here, because
+ * an unsettled market can be voided and refunded.
+ *
+ * The implementation lives in {@link ./consensus.ts}; this module re-exports the pieces
+ * the rest of the codebase uses.
  */
-export interface Fixture {
-  /** Provider's own id for the fixture. */
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  /** Unix seconds. */
-  kickoffAt: number;
-  status: 'scheduled' | 'live' | 'finished' | 'unknown';
-  homeScore?: number;
-  awayScore?: number;
-  /** URL a human can open to check the same fact. */
-  sourceUrl: string;
-}
+export {
+  ScoreConsensus,
+  canonicalFixtureString,
+  conditionToString,
+  eventKeyFor,
+  evaluate,
+  parseCondition,
+  type Condition,
+  type ConsensusDecided,
+  type ConsensusResult,
+  type ConsensusUndecided,
+  type FixtureRef,
+  type Observation,
+} from './consensus.js';
 
-export interface ScoreFeed {
-  readonly providerName: string;
-  getFixture(fixtureId: string): Promise<Fixture | null>;
-}
-
-/**
- * Stand-in feed used until D-06 is decided. It answers "I do not know" for everything,
- * which makes the agent pass on every market rather than invent a scoreline -- the
- * correct behaviour for a forecaster with no data.
- */
-export class NullScoreFeed implements ScoreFeed {
-  readonly providerName = 'null-feed (no provider selected yet -- see docs/DECISIONS.md D-06)';
-
-  async getFixture(): Promise<Fixture | null> {
-    return null;
-  }
-}
+export {LEAGUES, normalizeTeam, sameTeam, type ScoreProvider} from './providers/types.js';
+export {TheSportsDbProvider} from './providers/thesportsdb.js';
+export {EspnProvider} from './providers/espn.js';
+export {FootballDataProvider} from './providers/footballData.js';
+export {loadFixtureRegistry, type FixtureEntry} from './registry.js';
