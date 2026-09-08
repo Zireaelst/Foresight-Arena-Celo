@@ -9,6 +9,12 @@ cp .env.local.example .env.local   # varsayılan: Celo Sepolia
 npm run dev                        # http://localhost:3000
 ```
 
+`.env.local` içindeki `NEXT_PUBLIC_RPC_URL`'i yerel fork'a (`127.0.0.1:8546`) yalnızca
+`scripts/local-e2e.sh` çalışırken çevir. Panel her istekte market durumunu zincirden
+okuyor — bu bilinçli bir tercih (ziyaretçinin gördüğü şey, staker'ın karşısına çıkacak
+şey) ama bedeli şu: RPC ölüyse sayfa bayat veri göstermez, `ECONNREFUSED` ile 500 verir.
+Fork kapandıktan sonra bu ayarı geri almayı unutmak, bu projede en kolay düşülen tuzak.
+
 ## İki tasarım kuralı
 
 **1. Adres ve ABI elle yazılmıyor.** Adresler
