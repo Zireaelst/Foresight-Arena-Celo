@@ -7,12 +7,13 @@ contracts/out/
 contracts/cache/
 contracts/broadcast/
 
-# Deployment records are written by the deploy script. They are ignored while the only
-# ones produced are from a local anvil fork: anvil's addresses are deterministic and look
-# exactly like real ones, so committing them would advertise a deployment that does not
-# exist. Commit the file for a network the arena is genuinely live on -- the dashboard
-# reads its addresses from here.
+# Deployment records are written by the deploy script. Local anvil-fork records stay out
+# of git: anvil's addresses are deterministic and indistinguishable from real ones, so
+# committing one would advertise a deployment that does not exist. A network the arena is
+# genuinely live on is force-added instead -- the dashboard reads its addresses from here,
+# and Vercel builds from git, so the file has to be in the repo.
 contracts/deployments/*.json
+!contracts/deployments/11142220.json
 
 # --- secrets & local config ---
 # Agent keys live here. Never commit .env; .env.example is the template.

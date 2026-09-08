@@ -1,0 +1,11 @@
+{
+  "attestedScoreResolver": "0x6Ef7028792dB90B89D59A9bB4f9F3D57E0932C54",
+  "chainId": 11142220,
+  "chainMetricResolver": "0xA488bDBc0272e313F31409a9084dA87b262a5ae6",
+  "foresightPool": "0xaEc61e94B7BD977F8EB7148eDb320f3c68197616",
+  "mentoPriceResolver": "0xea3185430A1Cde3af1f181a17b389F569498d948",
+  "owner": "0xED939f56FAc9a81EAa2E1b41e57295712f60b298",
+  "priceFeed": "0x92D3DDd18db00767D6d349ec55108A1c1C2676B0",
+  "scoreAttestor": "0xED939f56FAc9a81EAa2E1b41e57295712f60b298",
+  "stakeToken": "0x28C6a27808c44e7ff442740ddbe55750D5d1E956"
+}
