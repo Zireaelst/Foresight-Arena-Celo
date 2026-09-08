@@ -100,7 +100,22 @@ export class ReputationClient {
     return {payload, hash};
   }
 
-  async summary(agentId: bigint, clients: Address[] = []) {
+  /**
+   * Aggregate score for `agentId` as reported by specific clients.
+   *
+   * `clients` is required and must be non-empty: the deployed registry rejects an empty
+   * list outright (`clientAddresses required`), and that is the right shape for the
+   * question anyway -- a reputation number is only meaningful once you say whose opinion
+   * you are counting. For this project the client is whichever wallet wrote the feedback,
+   * i.e. the agent wallets themselves.
+   */
+  async summary(agentId: bigint, clients: Address[]) {
+    if (clients.length === 0) {
+      throw new Error(
+        'ReputationRegistry.getSummary requires at least one client address; pass the agent ' +
+          'wallet(s) whose feedback should be counted.',
+      );
+    }
     const [count, summaryValue, decimals] = await this.ctx.publicClient.readContract({
       address: this.registry,
       abi: reputationRegistryAbi,

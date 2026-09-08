@@ -1,6 +1,6 @@
 import {decodeAbiParameters, type Address} from 'viem';
 
-import {sortedOraclesAbi} from '../../core/abi.js';
+import {mentoPriceResolverAbi, sortedOraclesAbi} from '../../core/abi.js';
 import {chainNow, type ChainContext} from '../../core/chain.js';
 import {Side, type ForesightAgent, type Intent, type MarketView, type Research} from '../../core/types.js';
 
@@ -19,6 +19,9 @@ export class PriceSentinel implements ForesightAgent {
 
   agentId?: bigint;
 
+  /** Cached after the first read; the resolver's oracle is immutable. */
+  private oraclesAddress?: Address;
+
   constructor(
     private readonly ctx: ChainContext,
     /** Address of the deployed MentoPriceResolver; markets pointing elsewhere are out of scope. */
@@ -29,9 +32,29 @@ export class PriceSentinel implements ForesightAgent {
     return market.resolver.toLowerCase() === this.resolverAddress.toLowerCase();
   }
 
+  /**
+   * The oracle the resolver will actually settle against.
+   *
+   * Read from the resolver rather than from this project's address table, because the two
+   * can differ and the difference is silent: on Celo Sepolia the resolver points at a
+   * maintained stand-in, while the table holds Mento's own (unmaintained) SortedOracles.
+   * Reading a different median than the one that will settle the market would break the
+   * agent's central claim -- that it forecasts drift, not the meaning of "the price".
+   */
+  private async oracles(): Promise<Address> {
+    if (!this.oraclesAddress) {
+      this.oraclesAddress = await this.ctx.publicClient.readContract({
+        address: this.resolverAddress,
+        abi: mentoPriceResolverAbi,
+        functionName: 'sortedOracles',
+      });
+    }
+    return this.oraclesAddress;
+  }
+
   async research(market: MarketView): Promise<Research> {
     const config = decodeConfig(market.resolverConfig);
-    const oracles = this.ctx.addresses.sortedOracles as Address;
+    const oracles = await this.oracles();
 
     const [[numerator, denominator], reportedAt, reporters] = await Promise.all([
       this.ctx.publicClient.readContract({

@@ -1,13 +1,10 @@
 import {chainNow, type ChainContext} from './chain.js';
 import type {PoolClient} from './pool.js';
-import type {ReputationClient} from './reputation.js';
-import {scoreFromSettlement} from './reputation.js';
 import {Outcome, Side, type AgentBudget, type ForesightAgent, type MarketView, type SettlementReport} from './types.js';
 
 export interface RunnerOptions {
   ctx: ChainContext;
   pool: PoolClient;
-  reputation: ReputationClient;
   stakeToken: `0x${string}`;
   budget: AgentBudget;
   /** When true, everything is computed and logged but nothing is broadcast. */
@@ -20,18 +17,25 @@ export interface CycleResult {
   staked: number;
   resolved: number;
   claimed: number;
-  feedback: number;
+  /** Settled markets this cycle, for the scorekeeper to score. The runner does not write
+   *  reputation itself -- see the note on {@link AgentRunner}. */
+  settlements: SettlementReport[];
   skipped: {marketId: bigint; reason: string}[];
 }
 
 /**
- * Drives one agent through one full cycle of the loop:
+ * Drives one agent through one cycle:
  *
- *   research -> position -> settle -> reputation
+ *   research -> position -> settle -> claim
  *
  * The runner, not the agent, owns everything that costs money. An agent can be as
  * confident as it likes; the caps enforced here (and again in the contract) are what keep
  * balances symbolic.
+ *
+ * Reputation is deliberately NOT written here. The ERC-8004 Reputation Registry rejects
+ * feedback from an agent's own wallet ("Self-feedback not allowed"), so an agent cannot
+ * grade itself even if it wanted to. That job belongs to the independent scorekeeper
+ * (src/ops/scorekeeper.ts), which derives every score from public chain state.
  */
 export class AgentRunner {
   private readonly log: (message: string, data?: unknown) => void;
@@ -46,7 +50,7 @@ export class AgentRunner {
   }
 
   async runCycle(): Promise<CycleResult> {
-    const result: CycleResult = {researched: 0, staked: 0, resolved: 0, claimed: 0, feedback: 0, skipped: []};
+    const result: CycleResult = {researched: 0, staked: 0, resolved: 0, claimed: 0, settlements: [], skipped: []};
     const markets = await this.options.pool.listMarkets();
     const now = await chainNow(this.options.ctx);
 
@@ -70,7 +74,8 @@ export class AgentRunner {
         const report = await this.tryClaim(market);
         if (report) {
           result.claimed++;
-          if (await this.tryReputation(report)) result.feedback++;
+          result.settlements.push(report);
+          await this.agent.onSettled?.(report);
         }
       }
     }
@@ -182,32 +187,6 @@ export class AgentRunner {
       market.outcome === Outcome.Yes ? side === Side.Yes : market.outcome === Outcome.No ? side === Side.No : false;
 
     return {marketId: market.id, outcome: market.outcome, payout, staked, calledCorrectly};
-  }
-
-  // -- step 4: reputation ------------------------------------------------
-
-  private async tryReputation(report: SettlementReport): Promise<boolean> {
-    const agentId = this.agent.agentId;
-    if (agentId === undefined) {
-      this.log('skipping reputation write: agent is not registered in the ERC-8004 Identity Registry yet');
-      return false;
-    }
-
-    const call = this.calls.get(report.marketId.toString());
-    await this.options.reputation.giveFeedback({
-      agentId,
-      score: scoreFromSettlement(report),
-      marketId: report.marketId,
-      outcome: report.outcome,
-      calledCorrectly: report.calledCorrectly,
-      payout: report.payout,
-      staked: report.staked,
-      rationale: call?.rationale ?? '(rationale not recorded in this process)',
-      sources: call?.sources ?? [],
-    });
-
-    await this.agent.onSettled?.(report);
-    return true;
   }
 }
 
