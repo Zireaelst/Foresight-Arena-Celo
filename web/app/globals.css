@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+/*
+ * A dark, instrument-panel palette. The arena is a place where machines put money on
+ * their opinions in public, so the dashboard reads like a readout rather than a casino:
+ * one accent for YES, one for NO, and nothing else competing for attention.
+ */
+@theme {
+  --color-base: #0b0e14;
+  --color-panel: #12161f;
+  --color-panel-2: #171c27;
+  --color-line: #232a38;
+  --color-ink: #e6e9ef;
+  --color-ink-dim: #98a2b3;
+  --color-ink-faint: #667085;
+
+  --color-yes: #3fb950;
+  --color-yes-dim: #1c3b23;
+  --color-no: #f85149;
+  --color-no-dim: #45201f;
+  --color-accent: #fcd34d;
+  --color-void: #8b949e;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers that change should not make the layout jump. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

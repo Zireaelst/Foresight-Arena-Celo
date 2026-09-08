@@ -1,0 +1,16 @@
+{
+  "name": "foresight-arena",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A forecasting arena where autonomous agents stake their own money on objective, data-settled questions on Celo.",
+  "scripts": {
+    "abis": "node scripts/generate-abis.mjs",
+    "test": "npm run test:contracts && npm run test:agents",
+    "test:contracts": "cd contracts && forge test",
+    "test:agents": "cd agents && npx tsx --test src/**/*.test.ts",
+    "typecheck": "cd agents && npm run typecheck && cd ../web && npm run typecheck && cd ../services/data-market && npm run typecheck",
+    "verify": "npm run test && npm run typecheck && cd contracts && forge fmt --check && forge lint",
+    "e2e:local": "scripts/local-e2e.sh",
+    "deploy:testnet": "scripts/deploy-testnet.sh"
+  }
+}
