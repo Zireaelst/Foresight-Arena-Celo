@@ -5,6 +5,8 @@ parasıyla** pozisyon aldığı bir tahmin arenası. Celo üzerinde, sembolik li
 
 Celo Agents at Work Hackathon başvurusu — ana track: Track 4 (Judges' Favorite).
 
+**Canlı:** [foresight-arena.vercel.app](https://foresight-arena.vercel.app) · Celo Sepolia
+
 ## Nasıl çalışıyor
 
 Her market bir soru ve bir **resolver sözleşmesi**dir. Agent araştırır (kimi zaman
@@ -91,16 +93,42 @@ Her şeyi doğrula:
 npm run verify        # 68 sözleşme testi + 12 agent testi + typecheck + fmt + lint
 ```
 
+## Celo Sepolia'da canlı
+
+Panel: **[foresight-arena.vercel.app](https://foresight-arena.vercel.app)**
+
+| Kontrat | Adres |
+|---|---|
+| `ForesightPool` | [`0xaEc61e94B7BD977F8EB7148eDb320f3c68197616`](https://celo-sepolia.blockscout.com/address/0xaEc61e94B7BD977F8EB7148eDb320f3c68197616) |
+| `TestnetUSDC` (tUSDC, açık faucet) | [`0x28C6a27808c44e7ff442740ddbe55750D5d1E956`](https://celo-sepolia.blockscout.com/address/0x28C6a27808c44e7ff442740ddbe55750D5d1E956) |
+| `MentoPriceResolver` | `0xea3185430A1Cde3af1f181a17b389F569498d948` |
+| `ChainMetricResolver` | `0xA488bDBc0272e313F31409a9084dA87b262a5ae6` |
+| `AttestedScoreResolver` | `0x6Ef7028792dB90B89D59A9bB4f9F3D57E0932C54` |
+| `TestnetSortedOracles` (vekil) | `0x92D3DDd18db00767D6d349ec55108A1c1C2676B0` |
+
+| Agent | ERC-8004 | Cüzdan |
+|---|---|---|
+| Fiyat Nöbetçisi | [#428](https://foresight-arena.vercel.app/api/agents/price-sentinel/registration.json) | `0x21d2C5d4Ea6243D823A4a40C8f7d27B50B39c6F8` |
+| Zincir Nabzı | [#429](https://foresight-arena.vercel.app/api/agents/chain-pulse/registration.json) | `0x75B515B93D55656Cfa1d1868c596285c484a5a46` |
+| Skor Kahini | [#430](https://foresight-arena.vercel.app/api/agents/score-oracle/registration.json) | `0x3621Fd05b2AB8289b51E81dC03Cd2b05483DbAB3` |
+
+Her agent'ın `agentURI`'si zincirden okunup **gerçekten fetch edilebiliyor** — kayıt
+belgesi yukarıdaki panelden servis ediliyor.
+
+Skor tutucu (itibarı yazan, agent'lardan **ayrı** cüzdan):
+`0xE2f9ce8ab4F592A8420bF4dc9a044235CB03C608`
+
 ## Durum
 
 | Faz | Durum |
 |---|---|
 | Sözleşme katmanı, üç agent, attribution zorlaması | tamam |
 | Spor verisi oydaşması (D-07) | tamam |
-| ERC-8004 kayıt + bağımsız skor tutucu (D-10) | tamam, forkta doğrulandı |
+| ERC-8004 kayıt + bağımsız skor tutucu (D-10) | **Sepolia'da canlı** |
 | x402 satıcı + alıcı + facilitator (D-12) | tamam, forkta ödeme settle etti |
-| Panel (D-14) | tamam |
-| **Celo Sepolia'ya deploy** | **cüzdan fonlaması bekliyor** |
+| Panel (D-14) | **canlı** |
+| Celo Sepolia'ya deploy | **tamam** |
+| Attribution tag | hâlâ placeholder — celobuilders kaydı bekliyor |
 | Mainnet | D-08 güvenlik incelemesi kapanmadan hayır |
 
 Başlangıç: [`docs/DECISIONS.md`](docs/DECISIONS.md) → [`contracts/README.md`](contracts/README.md)
