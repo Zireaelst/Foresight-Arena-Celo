@@ -71,7 +71,18 @@ Celo mainnet kontrat adresleri:
 
 **Celo Sepolia** testnet (Alfajores değil — registry'ler orada deploy edilmemiş):
 Identity `0x8004A818BFB912233c491871b3d84c89A494BD9e`, Reputation `0x8004B663056A597Dffe9eCcC1965A193B7388713`.
-Dördü de 2026-09-02'de on-chain doğrulandı (`name()` = `"AgentIdentity"`).
+
+**Düzeltme (2026-09-08):** Yalnızca **Identity** registry'leri ERC-721, yani `name()` =
+`"AgentIdentity"` sadece onlarda çalışıyor. Reputation registry'lerinde `name()` **revert
+ediyor** — canlılığı `getIdentityRegistry()` ile doğrula (Sepolia'da doğru Identity
+adresini döndürüyor). Dördü de 130 byte'lık proxy.
+
+**İki sert API gerçeği (zincirde doğrulandı):**
+- `giveFeedback`, agent'ın **kendi sahibinden** gelen çağrıyı `Self-feedback not allowed`
+  ile reddediyor. Agent kendi itibarını yazamaz; ayrı bir "skor tutucu" cüzdanı şart
+  (bkz. `docs/DECISIONS.md` D-10).
+- `getSummary(agentId, [], …)` **boş** `clientAddresses` ile revert ediyor
+  (`clientAddresses required`). En az bir client adresi geçilmeli.
 
 Her agent bir ERC-721 olarak kayıtlı; `agentURI` bir kayıt dosyasına (endpoints, wallet, desteklenen trust modelleri) işaret ediyor. Kayıt/feedback SDK'sı hızlı değişebiliyor — **build başlarken eips.ethereum.org/EIPS/eip-8004 ve docs.celo.org/build-on-celo/build-with-ai/8004'ü tazele**, burada verilenler başlangıç noktası.
 
@@ -84,6 +95,16 @@ Facilitator: `https://api.x402.celo.org` (Sepolia: `api.x402.sepolia.celo.org`),
 `X-API-Key` başlığı gerekiyor. Network id `eip155:42220`. **Protokol ücreti yok**;
 settlement başına $0.001 kredi + $0.001 altı gas. EIP-3009 `transferWithAuthorization`
 ile settle ediliyor, yani alıcı gas ödemiyor. `buy` kapalı beta — kayıt sırasında opt-in gerekiyor, kaynağı kapalı, bu yüzden bu hackathon'da sadece feedback/test tarafındasın (satıcı değil alıcı).
+
+**Doğrulanan paket gerçekleri (2026-09-08):** `@x402/*` 2.25.0. Sunucu tarafı şema
+`@x402/evm/exact/server`'dan gelir (kök export **client** tarafıdır). v2 payload'ında
+`scheme`/`network` **`paymentPayload.accepted`** altındadır (v1'de üst seviyedeydi).
+Makbuz başlığı **`payment-response`** (v1: `x-payment-response`). İstemcinin varsayılan
+`spendControls`'ü bilinmeyen varlığı reddeder — `allowedAssets` açıkça verilmeli.
+
+Facilitator'ın `X-API-Key` gerektirmesi ödeme yolunu bir kimlik bilgisine bağlıyor; bu
+yüzden repo kendi facilitator'ını da barındırıyor (`services/data-market`, `/verify` +
+`/settle` + `/supported`). Celo'nunkine geçmek tek bir URL değişikliği. Gerekçe: D-12.
 
 ### Self (proof of personhood)
 ZK kanıtlarıyla kimlik doğrulama (pasaport NFC, AB biyometrik kimlik, Aadhaar). Akış:
@@ -118,6 +139,8 @@ npx skills add https://celobuilders.xyz
 - **Her mainnet işleminde Attribution Tag olmalı**, yoksa hiç sayılmıyor.
 - **Sponsorlu gas'ı kendi katkın gibi sayma** — track ölçümünde sayılmıyor, bunu iddia etme.
 - **celobuilders skill'ini her session başında tazelemeyi unutma** — eski sürüm yanlış alanlar sorar.
+- **Skor tutucu cüzdanı agent cüzdanlarından farklı olmak zorunda** — ERC-8004 self-feedback'i reddediyor.
+- **Testnet vekilleri mainnet'e sızmamalı** — `Deploy.s.sol` bunu `block.chainid` ile zorluyor, `ops:price-feed` mainnet'te çalışmayı reddediyor.
 - Gerçek parayla ilgili herhangi bir kontrat mainnet'e çıkmadan önce ekipten en az bir kişi kod incelemesi yapmalı.
 
 ## Açık kararlar
@@ -126,8 +149,10 @@ Tam gerekçeler ve kilitlenen değerler: `docs/DECISIONS.md`. Aşağısı sadece
 
 - [x] **Fiyat feed kaynağı** — Mento SortedOracles (on-chain). Kapsam Mento çiftleriyle
       sınırlı ve anlık medyan okunuyor; sorular "çözüm anında" diye yazılmalı. (D-04)
-- [ ] **Spor verisi API'si** — hâlâ açık. Kod `ScoreFeed` arayüzü arkasında
-      `NullScoreFeed` ile duruyor, agent her markete pass geçiyor. (D-07)
+      **Testnet uyarısı:** Sepolia'daki Mento feed'i 384 gün bayat, o yüzden orada açıkça
+      etiketli bir vekil (`TestnetSortedOracles`) kullanılıyor. (D-11)
+- [x] **Spor verisi API'si** — tek sağlayıcı değil, birbirinden bağımsız ücretsiz API
+      **paneli** ve kesin skorda oydaşma; tek muhalif varsa settle edilmiyor. (D-07)
 - [x] **Sembolik bakiye miktarı** — pozisyon başına 1 USDC, agent 10 USDC, insan 5 USDC.
       Kontratta sabit, `openExposure` ile zorlanıyor. (D-02)
 - [x] **Pazar oluşturma yetkisi** — ekip + kayıtlı agent'lar. Nesnellik guardrail'i soru
