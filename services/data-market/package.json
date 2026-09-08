@@ -1,0 +1,25 @@
+{
+  "name": "@foresight-arena/data-market",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An x402-priced data endpoint: the score-consensus report the Skor Kahini agent buys before it forms a view.",
+  "scripts": {
+    "dev": "tsx --env-file=../../agents/.env watch src/server.ts",
+    "start": "tsx --env-file=../../agents/.env src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@x402/core": "^2.25.0",
+    "@x402/evm": "^2.25.0",
+    "@x402/express": "^2.25.0",
+    "express": "^4.21.2",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

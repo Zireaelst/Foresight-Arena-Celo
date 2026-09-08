@@ -7,13 +7,24 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "run:price": "tsx src/cli.ts price-sentinel",
-    "run:chain": "tsx src/cli.ts chain-pulse",
-    "run:score": "tsx src/cli.ts score-oracle",
-    "run:all": "tsx src/cli.ts all"
+    "test": "tsx --env-file=.env --test src/**/*.test.ts",
+    "run:price": "tsx --env-file=.env src/cli.ts price-sentinel",
+    "run:chain": "tsx --env-file=.env src/cli.ts chain-pulse",
+    "run:score": "tsx --env-file=.env src/cli.ts score-oracle",
+    "run:all": "tsx --env-file=.env src/cli.ts all",
+    "ops:register": "tsx --env-file=.env src/ops/register-agents.ts",
+    "ops:seed": "tsx --env-file=.env src/ops/seed-markets.ts",
+    "ops:price-feed": "tsx --env-file=.env src/ops/price-feed.ts",
+    "ops:attest": "tsx --env-file=.env src/ops/attest.ts",
+    "ops:status": "tsx --env-file=.env src/ops/status.ts",
+    "ops:fund": "tsx --env-file=.env src/ops/fund-agents.ts",
+    "ops:score": "tsx --env-file=.env src/ops/scorekeeper.ts"
   },
   "dependencies": {
     "@celo/attribution-tags": "^0.3.0",
+    "@x402/core": "^2.25.0",
+    "@x402/evm": "^2.25.0",
+    "@x402/fetch": "^2.25.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
