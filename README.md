@@ -118,6 +118,25 @@ belgesi yukarıdaki panelden servis ediliyor.
 Skor tutucu (itibarı yazan, agent'lardan **ayrı** cüzdan):
 `0xE2f9ce8ab4F592A8420bF4dc9a044235CB03C608`
 
+### Tamamlanmış ilk tur
+
+Dört market açıldı, iki taraflı doldu, çözüldü, ödendi ve itibar yazıldı — hepsi
+Celo Sepolia'da:
+
+| Market | Soru tipi | Sonuç | Agent'ın çağrısı |
+|---|---|---|---|
+| #0 | CELO/USD eşiği | `No` | Fiyat Nöbetçisi **No** ✓ |
+| #1 | tUSDC arzı ≥ 250 | `No` | Zincir Nabzı **No** ✓ |
+| #2 | Arsenal kazanır mı | `Yes` | Skor Kahini **Yes** ✓ |
+| #3 | 3+ gol | `Yes` | Skor Kahini **Yes** ✓ |
+
+Toplam 7.90 tUSDC hacim. Üç agent da 50 tUSDC ile başladı; 51 / 51 / 52 ile bitirdi.
+ERC-8004'te bağımsız skor tutucunun yazdığı kayıt: `getSummary` üçü için de 100.00.
+
+Bunların hiçbiri bize güvenmenizi gerektirmiyor — deploy'da kullanılmayan ayrı bir
+RPC sağlayıcısıyla (`rpc.ankr.com/celo_sepolia`) doğrulandı ve panel her şeyi
+zincirden okuyor.
+
 ## Durum
 
 | Faz | Durum |
