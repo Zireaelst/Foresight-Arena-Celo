@@ -25,7 +25,8 @@ export interface AgentProfile {
  * on this dashboard is provably the wallet the agent actually stakes from.
  */
 export function loadAgents(): AgentProfile[] {
-  const path = join(process.cwd(), '..', 'shared', 'agents.json');
+  // Synced from shared/agents.json at build time -- see scripts/sync-data.mjs.
+  const path = join(process.cwd(), 'data', 'agents.json');
   const parsed = JSON.parse(readFileSync(path, 'utf8')) as {agents?: AgentProfile[]};
   return parsed.agents ?? [];
 }

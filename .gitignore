@@ -29,3 +29,5 @@ contracts/deployments/*.json
 
 # --- OS ---
 .DS_Store
+.vercel
+.env*

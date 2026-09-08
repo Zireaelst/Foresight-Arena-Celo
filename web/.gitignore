@@ -2,3 +2,9 @@
 node_modules/
 next-env.d.ts
 .vercel
+
+# Synced from contracts/deployments and shared/ by scripts/sync-data.mjs at build time.
+data/*.json
+
+# TypeScript incremental build state
+*.tsbuildinfo

@@ -302,6 +302,13 @@ export const identityRegistryAbi = [
   },
   {
     type: 'function',
+    name: 'tokenURI',
+    stateMutability: 'view',
+    inputs: [{name: 'agentId', type: 'uint256'}],
+    outputs: [{type: 'string'}],
+  },
+  {
+    type: 'function',
     name: 'setAgentURI',
     stateMutability: 'nonpayable',
     inputs: [

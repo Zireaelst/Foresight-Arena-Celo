@@ -26,7 +26,9 @@ export interface Deployment {
  */
 export function loadDeployment(): Deployment | null {
   try {
-    const path = join(process.cwd(), '..', 'contracts', 'deployments', `${CHAIN_ID}.json`);
+    // Synced into web/data by scripts/sync-data.mjs at build time, so the dashboard
+    // never reaches outside its own directory at request time.
+    const path = join(process.cwd(), 'data', `${CHAIN_ID}.json`);
     return JSON.parse(readFileSync(path, 'utf8')) as Deployment;
   } catch {
     return null;
@@ -38,8 +40,8 @@ export function requireDeployment(): Deployment {
   const deployment = loadDeployment();
   if (!deployment) {
     throw new Error(
-      `No deployment found for chain ${CHAIN_ID}. Run the deploy script in contracts/ first ` +
-        '(see contracts/README.md).',
+      `No deployment found for chain ${CHAIN_ID}. Deploy the contract layer first ` +
+        '(scripts/deploy-testnet.sh), then `npm run sync-data` here.',
     );
   }
   return deployment;

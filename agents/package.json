@@ -18,7 +18,8 @@
     "ops:attest": "tsx --env-file=.env src/ops/attest.ts",
     "ops:status": "tsx --env-file=.env src/ops/status.ts",
     "ops:fund": "tsx --env-file=.env src/ops/fund-agents.ts",
-    "ops:score": "tsx --env-file=.env src/ops/scorekeeper.ts"
+    "ops:score": "tsx --env-file=.env src/ops/scorekeeper.ts",
+    "ops:agent-uris": "tsx --env-file=.env src/ops/set-agent-uris.ts"
   },
   "dependencies": {
     "@celo/attribution-tags": "^0.3.0",
